@@ -1,0 +1,7 @@
+tensorflow==2.15.1       # or whichever TF you prefer
+opencv-python-headless    # needed for cv2
+python-multipart==0.0.9   # FastAPI file upload support
+fastapi==0.110.1
+uvicorn==0.29.0
+pillow==10.0.1
+numpy<2

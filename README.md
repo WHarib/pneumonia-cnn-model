@@ -1,11 +1,19 @@
 ---
-title: Pneumonia Cnn Model
-emoji: 🦀
-colorFrom: pink
-colorTo: blue
+title: Pneumonia CNN Classifier API
+emoji: 🫁
+colorFrom: indigo   # ← stays
+colorTo: green      # ← replace teal with an allowed colour
 sdk: docker
+app_file: app.py
 pinned: false
-license: mit
 ---
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+
+# Pneumonia CNN Classifier (FastAPI)
+
+This Space exposes a REST endpoint that classifies chest-X-ray images as **Pneumonia** or **Normal** using a TensorFlow CNN (~90 % accuracy).
+
+**Endpoint**
+
+```http
+POST /predict   (multipart/form-data, field name = file)
