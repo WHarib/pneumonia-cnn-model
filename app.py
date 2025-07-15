@@ -11,34 +11,37 @@ app = FastAPI(
     docs_url="/docs",
 )
 
-MODEL_DIR = "pneumonia_cnn_saved_model"
+# ───── Paths ──────────────────────────────────────────────────────────────
 ZIP_FILE   = "pneumonia_cnn_saved_model.zip"
+MODEL_DIR  = "/tmp/pneumonia_cnn_saved_model"   # <─ always writable
 CLASS_NAMES = ["PNEUMONIA", "NORMAL"]
 
-# ── Un-zip SavedModel if first launch ─────────────────────────────────────
+# ───── Un-zip SavedModel (first launch) ───────────────────────────────────
 if not os.path.exists(MODEL_DIR):
     try:
+        os.makedirs(MODEL_DIR, exist_ok=True)
         with zipfile.ZipFile(ZIP_FILE, "r") as zf:
             zf.extractall(MODEL_DIR)
     except Exception as e:
         raise RuntimeError(f"Cannot extract SavedModel: {e}")
-# ── Load model ────────────────────────────────────────────────────────────
+
+# ───── Load model ─────────────────────────────────────────────────────────
 try:
     model  = tf.saved_model.load(MODEL_DIR)
     infer  = model.signatures["serving_default"]
-    IN_KEY = list(infer.structured_input_signature[1].keys())[0]
+    IN_KEY  = list(infer.structured_input_signature[1].keys())[0]
     OUT_KEY = list(infer.structured_outputs.keys())[0]
 except Exception as e:
     raise RuntimeError(f"Model loading error: {e}\n{traceback.format_exc()}")
 
-# ── Helpers ───────────────────────────────────────────────────────────────
+# ───── Helpers ────────────────────────────────────────────────────────────
 def preprocess(pil_img: Image.Image) -> np.ndarray:
     """RGB PIL → (1,150,150,1) float32 0-1"""
     gray = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2GRAY)
     gray = cv2.resize(gray, (150, 150)) / 255.0
     return gray.reshape(1, 150, 150, 1).astype("float32")
 
-# ── Routes ────────────────────────────────────────────────────────────────
+# ───── Routes ─────────────────────────────────────────────────────────────
 @app.get("/")
 async def root():
     return {"status": "ok"}
@@ -46,7 +49,7 @@ async def root():
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     try:
-        img = Image.open(io.BytesIO(await file.read())).convert("RGB")
+        img   = Image.open(io.BytesIO(await file.read())).convert("RGB")
         batch = preprocess(img)
 
         outputs = infer(**{IN_KEY: tf.convert_to_tensor(batch)})
